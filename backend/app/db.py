@@ -15,10 +15,8 @@ engine = create_engine(
     connect_args={"check_same_thread": False},
 )
 
-
 def create_db_and_tables() -> None:
     SQLModel.metadata.create_all(engine)
-
 
 @contextmanager
 def get_session():

@@ -14,3 +14,10 @@ class IngestionError(Exception):
     def __init__(self, message: str, step: str = "") -> None:
         super().__init__(message)
         self.step = step
+
+
+class RetrievalError(Exception):
+    """Raised when a retrieval step fails unrecoverably."""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)

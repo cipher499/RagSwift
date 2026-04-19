@@ -5,6 +5,7 @@ IngestionEvent rows to SQLite at each step so the SSE progress endpoint
 can replay them to the client.
 """
 
+import asyncio
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
@@ -88,7 +89,7 @@ async def run_ingestion(document_id: str, file_path: Path, filename: str) -> Non
         _emit(session, document_id, "parse", "running", 10)
 
         try:
-            li_docs = parse_document(file_path)
+            li_docs = await asyncio.to_thread(parse_document, file_path)
         except IngestionError as exc:
             _emit(session, document_id, "parse", "failed", 10, str(exc))
             _set_status(session, document_id, status=DocumentStatus.failed, error_message=str(exc))
@@ -125,7 +126,7 @@ async def run_ingestion(document_id: str, file_path: Path, filename: str) -> Non
         _emit(session, document_id, "chunk", "running", 30)
 
         try:
-            nodes = chunk_document(li_docs, document_id, filename)
+            nodes = await asyncio.to_thread(chunk_document, li_docs, document_id, filename)
         except IngestionError as exc:
             _emit(session, document_id, "chunk", "failed", 30, str(exc))
             _set_status(session, document_id, status=DocumentStatus.failed, error_message=str(exc))
