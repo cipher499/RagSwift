@@ -18,7 +18,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from openai import AsyncOpenAI
 
+from app.api.chats import router as chats_router
 from app.api.documents import router as documents_router
+import app.models.chat  # noqa: F401 — registers Chat/Message/Trace with SQLModel metadata
 from app.config import settings
 from app.db import create_db_and_tables
 from app.errors import AppException
@@ -116,6 +118,7 @@ async def app_exception_handler(request: Request, exc: AppException) -> JSONResp
 # ---------------------------------------------------------------------------
 
 app.include_router(documents_router)
+app.include_router(chats_router)
 
 
 # ---------------------------------------------------------------------------
