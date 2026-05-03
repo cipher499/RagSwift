@@ -149,7 +149,7 @@ async def run_ingestion(document_id: str, file_path: Path, filename: str) -> Non
         _emit(session, document_id, "embed", "running", 50)
 
         try:
-            embeddings = await embed_chunks(nodes)
+            nodes, embeddings = await embed_chunks(nodes)
         except IngestionError as exc:
             _emit(session, document_id, "embed", "failed", 50, str(exc))
             _set_status(session, document_id, status=DocumentStatus.failed, error_message=str(exc))
