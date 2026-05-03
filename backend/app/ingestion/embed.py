@@ -12,8 +12,7 @@ logger = logging.getLogger(__name__)
 _BATCH_SIZE = 100
 _MAX_RETRIES = 3
 
-
-async def embed_chunks(nodes: list[TextNode]) -> list[list[float]]:
+async def embed_chunks(nodes: list[TextNode]) -> tuple[list[TextNode], list[list[float]]]:
     """Embed a list of TextNodes using the OpenAI embeddings API.
 
     Batches up to 100 nodes per call.  Retries up to 3 times on any error
@@ -22,6 +21,9 @@ async def embed_chunks(nodes: list[TextNode]) -> list[list[float]]:
     Raises IngestionError if all retries are exhausted.
     """
     client = AsyncOpenAI(api_key=settings.openai_api_key)
+    nodes = [n for n in nodes if n.text and n.text.strip()]
+    if not nodes:
+      raise IngestionError("all chunks were empty after filtering", step="embed")
     batches = [nodes[i : i + _BATCH_SIZE] for i in range(0, len(nodes), _BATCH_SIZE)]
 
     logger.info(
@@ -34,7 +36,7 @@ async def embed_chunks(nodes: list[TextNode]) -> list[list[float]]:
     all_embeddings: list[list[float]] = []
 
     for batch_idx, batch in enumerate(batches):
-        texts = [node.text for node in batch]
+        texts = [node.text for node in batch if node.text and node.text.strip()]
 
         for attempt in range(_MAX_RETRIES):
             try:
@@ -70,4 +72,4 @@ async def embed_chunks(nodes: list[TextNode]) -> list[list[float]]:
                     raise IngestionError("embedding service unavailable", step="embed")
 
     logger.info("embed_chunks: done total=%d", len(all_embeddings))
-    return all_embeddings
+    return nodes,all_embeddings
