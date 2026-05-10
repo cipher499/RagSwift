@@ -51,7 +51,7 @@ def _emit(
 def _set_status(session: Session, document_id: str, **fields) -> None:
     """Update Document fields and set updated_at."""
     doc = session.get(Document, document_id)
-    if doc is None:
+    if doc is None:  
         logger.error("_set_status: document not found id=%s", document_id)
         return
     for key, value in fields.items():

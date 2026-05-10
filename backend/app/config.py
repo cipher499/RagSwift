@@ -2,9 +2,18 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+def find_env_file(start: Path) -> Path:
+    for parent in [start] + list(start.parents):
+        env_path = parent / ".env"
+        if env_path.exists():
+            return env_path
+    raise FileNotFoundError(".env file not found")
+
+ENV_FILE = find_env_file(Path(__file__).resolve())
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=ENV_FILE,
         env_file_encoding="utf-8",
         extra="ignore",
     )
