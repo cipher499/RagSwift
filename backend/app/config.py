@@ -11,6 +11,8 @@ def find_env_file(start: Path) -> Path:
 
 ENV_FILE = find_env_file(Path(__file__).resolve())
 
+_REPO_ROOT = Path(__file__).resolve().parents[2]  # backend/app/config.py → repo root
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=ENV_FILE,
@@ -31,9 +33,9 @@ class Settings(BaseSettings):
     app_port: int = 8000
 
     # Storage
-    chroma_persist_dir: str = "./data/chroma"
-    sqlite_path: str = "./data/app.db"
-    upload_dir: str = "./data/uploads"
+    chroma_persist_dir: str = str(_REPO_ROOT / "data/chroma")
+    sqlite_path: str = str(_REPO_ROOT / "data/app.db")
+    upload_dir: str = str(_REPO_ROOT / "data/uploads")
 
     # Models
     gen_model: str = "gpt-4o-mini"
@@ -48,7 +50,7 @@ class Settings(BaseSettings):
 
     # Limits
     max_file_size_mb: int = 50
-    max_pdf_pages: int = 500
+    max_pdf_pages: int = 1200
     max_documents: int = 20
     chat_history_turns: int = 6
 
