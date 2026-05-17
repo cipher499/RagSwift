@@ -8,6 +8,7 @@ Startup sequence (per specs/retrieval.md §6):
   5. Ensure prompts/ directory exists (content added in Phase 1 retrieval).
 """
 
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -22,9 +23,10 @@ from app.api.chats import router as chats_router
 from app.api.documents import router as documents_router
 import app.models.chat  # noqa: F401 — registers Chat/Message/Trace with SQLModel metadata
 from app.config import settings
-from app.db import create_db_and_tables
+from app.db import create_db_and_tables, engine
 from app.errors import AppException
 from app.ingestion.index import COLLECTION_NAME
+import app.retrieval.bm25 as bm25_retriever
 
 logging.basicConfig(
     level=logging.INFO,
@@ -47,8 +49,18 @@ async def lifespan(app: FastAPI):
     Path("prompts").mkdir(exist_ok=True)
     logger.info("startup: directories ok")
 
-    # 2. SQLite tables
+    # 2. SQLite tables + Phase 2 column migration
     create_db_and_tables()
+    # Add P2 columns to existing Trace tables (idempotent — ignores "duplicate column" errors)
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        for col, default in [("bm25_hits_json", "[]"), ("fused_hits_json", "[]")]:
+            try:
+                conn.execute(text(f"ALTER TABLE trace ADD COLUMN {col} TEXT DEFAULT '{default}'"))
+                conn.commit()
+                logger.info("startup: migrated trace.%s", col)
+            except Exception:
+                pass  # column already exists
     logger.info("startup: sqlite tables ok")
 
     # 3. OpenAI verification
@@ -80,6 +92,16 @@ async def lifespan(app: FastAPI):
         logger.info("startup: ChromaDB ok — collection '%s' ready", COLLECTION_NAME)
     except Exception as exc:
         raise RuntimeError(f"ChromaDB startup check failed: {exc}") from exc
+
+    # 5. BM25 startup rebuild from existing Chroma contents
+    try:
+        n = await asyncio.to_thread(
+            bm25_retriever.rebuild_from_chroma, settings.chroma_persist_dir
+        )
+        logger.info("startup: BM25 index ready — %d chunks", n)
+    except Exception as exc:
+        # Non-fatal: BM25 will return [] until next ingestion rebuilds the index
+        logger.warning("startup: BM25 rebuild failed (%s) — bm25 searches will return []", exc)
 
     logger.info("startup: complete — listening on %s:%s", settings.app_host, settings.app_port)
     yield

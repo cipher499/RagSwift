@@ -12,6 +12,7 @@ from pathlib import Path
 
 from sqlmodel import Session
 
+from app.config import settings
 from app.db import engine
 from app.errors import IngestionError
 from app.ingestion.chunk import chunk_document
@@ -19,6 +20,7 @@ from app.ingestion.embed import embed_chunks
 from app.ingestion.index import index_chunks
 from app.ingestion.parse import parse_document
 from app.models.document import Document, DocumentStatus, IngestionEvent
+import app.retrieval.bm25 as bm25_retriever
 
 logger = logging.getLogger(__name__)
 
@@ -192,6 +194,24 @@ async def run_ingestion(document_id: str, file_path: Path, filename: str) -> Non
             document_id,
             status=DocumentStatus.ready,
             num_chunks=len(nodes),
+        )
+
+    # Rebuild BM25 index after Chroma is updated so the new doc is immediately searchable.
+    # Run in a thread — BM25Okapi construction is CPU-bound.
+    try:
+        n = await asyncio.to_thread(
+            bm25_retriever.rebuild_from_chroma, settings.chroma_persist_dir
+        )
+        logger.info(
+            "run_ingestion: BM25 rebuilt after indexing document_id=%s total_chunks=%d",
+            document_id,
+            n,
+        )
+    except Exception as exc:
+        logger.warning(
+            "run_ingestion: BM25 rebuild failed (non-fatal) document_id=%s: %s",
+            document_id,
+            exc,
         )
 
     logger.info(

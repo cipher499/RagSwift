@@ -13,12 +13,10 @@ from sse_starlette.sse import EventSourceResponse
 
 from app.config import settings
 from app.db import engine
-from app.errors import RetrievalError
-from app.generation.generate import CANNED_MESSAGE, generate
+from app.generation.generate import generate
 from app.models.chat import Chat, Message, MessageRole, Trace
 from app.models.document import Document, DocumentStatus
-from app.retrieval.rewrite import rewrite
-from app.retrieval.semantic import semantic_search
+from app.retrieval.retrieve import retrieve
 
 router = APIRouter(prefix="/api/chats")
 logger = logging.getLogger(__name__)
@@ -175,28 +173,22 @@ async def send_message(chat_id: str, request: MessageRequest):
 
             yield _evt("user_message_saved", {"message_id": user_message_id, "chat_id": chat_id})
 
-            # Rewrite (never raises — falls back to original on exception)
-            rewrite_result = await rewrite(content)
-            yield _evt("trace_partial", {"rewritten_query": rewrite_result.rewritten_query})
+            # Full retrieval pipeline: rewrite → BM25 ∥ semantic → fuse
+            retrieval = await retrieve(content)
+            yield _evt("trace_partial", {"rewritten_query": retrieval.rewritten_query})
+            yield _evt("trace_partial", {
+                "bm25_hits": [h.model_dump() for h in retrieval.bm25_hits],
+                "semantic_hits": [h.model_dump() for h in retrieval.semantic_hits],
+            })
+            yield _evt("trace_partial", {
+                "fused_hits": [h.model_dump() for h in retrieval.fused_hits],
+            })
 
-            # Semantic search
-            semantic_fallback = False
-            hits = []
-            try:
-                hits = await semantic_search(rewrite_result.rewritten_query, settings.semantic_top_k)
-            except RetrievalError:
-                semantic_fallback = True
-                logger.warning("send_message: semantic_search failed, using empty hits")
-
-            yield _evt("trace_partial", {"semantic_hits": [h.model_dump() for h in hits]})
-
-            flags = {
-                "rewrite_fallback": rewrite_result.rewrite_fallback,
-                "semantic_fallback": semantic_fallback,
-            }
+            # fused_hits is the final context passed to generation (P2+)
+            final_hits = retrieval.fused_hits
 
             # Generate and stream tokens
-            async for token in generate(content, hits, history_messages):
+            async for token in generate(content, final_hits, history_messages):
                 full_answer += token
                 yield _evt("token", {"text": token})
 
@@ -217,11 +209,13 @@ async def send_message(chat_id: str, request: MessageRequest):
                     id=trace_id,
                     chat_id=chat_id,
                     original_query=content,
-                    rewritten_query=rewrite_result.rewritten_query,
-                    semantic_hits_json=json.dumps([h.model_dump() for h in hits]),
+                    rewritten_query=retrieval.rewritten_query,
+                    semantic_hits_json=json.dumps([h.model_dump() for h in retrieval.semantic_hits]),
+                    bm25_hits_json=json.dumps([h.model_dump() for h in retrieval.bm25_hits]),
+                    fused_hits_json=json.dumps([h.model_dump() for h in retrieval.fused_hits]),
                     final_answer=full_answer,
                     latency_ms=latency_ms,
-                    flags_json=json.dumps(flags),
+                    flags_json=json.dumps(retrieval.flags),
                 )
                 session.add(trace)
 
@@ -268,6 +262,8 @@ def get_trace(chat_id: str, trace_id: str):
             "original_query": trace.original_query,
             "rewritten_query": trace.rewritten_query,
             "semantic_hits": json.loads(trace.semantic_hits_json),
+            "bm25_hits": json.loads(trace.bm25_hits_json),
+            "fused_hits": json.loads(trace.fused_hits_json),
             "final_answer": trace.final_answer,
             "latency_ms": trace.latency_ms,
             "langsmith_run_url": trace.langsmith_run_url,
