@@ -33,9 +33,7 @@ RESULTS_DIR = ROOT / "eval" / "results"
 
 # Update this manually when you move to the next pipeline phase.
 PIPELINE_VERSION = "phase1_semantic"
-
 _openai_client = AsyncOpenAI(api_key=settings.openai_api_key)
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -47,11 +45,9 @@ def load_testset() -> list[dict]:
     with open(TESTSET_PATH) as f:
         return json.load(f)
 
-
 def save_testset(testset: list[dict]) -> None:
     with open(TESTSET_PATH, "w") as f:
         json.dump(testset, f, indent=2)
-
 
 def compute_recall(relevant: list[str], retrieved: list[str]) -> float:
     if not relevant:
@@ -150,7 +146,7 @@ def interactive_mode() -> None:
                     {
                         "chunk_id": h.chunk_id,
                         "score": h.score,
-                        "text_preview": h.text[:200],
+                        "text_preview": h.text[:500],
                     }
                     for h in hits
                 ],

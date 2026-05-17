@@ -1,4 +1,5 @@
 from pathlib import Path
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -53,6 +54,21 @@ class Settings(BaseSettings):
     max_pdf_pages: int = 1200
     max_documents: int = 20
     chat_history_turns: int = 6
+
+    @model_validator(mode="after")
+    def _resolve_storage_paths(self) -> "Settings":
+        """Resolve relative storage paths against the .env file's directory.
+
+        This makes CHROMA_PERSIST_DIR=./data/chroma in .env always resolve to
+        an absolute path rooted at the repo root, regardless of which directory
+        the process is launched from.
+        """
+        base = ENV_FILE.parent
+        for field in ("chroma_persist_dir", "sqlite_path", "upload_dir"):
+            val = Path(getattr(self, field))
+            if not val.is_absolute():
+                setattr(self, field, str(base / val))
+        return self
 
 
 settings = Settings()
