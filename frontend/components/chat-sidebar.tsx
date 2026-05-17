@@ -44,6 +44,11 @@ export function ChatSidebar() {
 
   return (
     <div className="flex h-full flex-col border-r bg-muted/30">
+      {/* Brand */}
+      <div className="px-4 py-3 border-b">
+        <span className="text-base font-bold tracking-tight">RAGSwift</span>
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b">
         <span className="text-sm font-semibold">Chats</span>

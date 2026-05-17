@@ -33,6 +33,7 @@ def chunk_document(
     )
 
     nodes: list[TextNode] = splitter.get_nodes_from_documents(documents)
+    nodes = [n for n in nodes if n.text and n.text.strip()]
 
     if not nodes:
         raise IngestionError("no chunks produced", step="chunk")
