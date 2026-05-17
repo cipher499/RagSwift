@@ -98,10 +98,11 @@ def interactive_mode() -> None:
                 print(f"Flags: {result.flags}")
             continue
 
+        hits = hits[:7]
         print(f"\nTop {len(hits)} results:")
         for i, hit in enumerate(hits):
             print(f"  [{i}] chunk_id={hit.chunk_id}  score={hit.score:.4f}  file={hit.filename}")
-            print(f"       {hit.text[:200]!r}")
+            print(f"       {hit.text!r}")
             print()
 
         if result.flags:
@@ -255,7 +256,7 @@ async def _browse_embed_and_query(search_term: str) -> dict:
     collection = get_chroma_collection()
     return collection.query(
         query_embeddings=[embedding],
-        n_results=10,
+        n_results=7,
         include=["documents", "metadatas", "distances"],
     )
 
@@ -280,7 +281,7 @@ def browse_mode(search_term: str) -> None:
         print(f"chunk_id : {chunk_id}")
         print(f"score    : {score:.4f}")
         print(f"metadata : {meta}")
-        print(f"text     : {text[:150]!r}")
+        print(f"text     : {text[:500]!r}")
         print()
 
 

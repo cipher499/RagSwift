@@ -1,1 +1,153 @@
-[]
+[
+  {
+    "query": "What is prompt caching?",
+    "relevant_chunks": [
+      "76a41157-1999-48a3-b019-6b3695ea1d98:0834",
+      "76a41157-1999-48a3-b019-6b3695ea1d98:0835",
+      "76a41157-1999-48a3-b019-6b3695ea1d98:0836"
+    ],
+    "retrieved_chunks_snapshot": [
+      {
+        "chunk_id": "76a41157-1999-48a3-b019-6b3695ea1d98:0834",
+        "score": 0.8638762831687927,
+        "text_preview": "Prompt caching\nMany prompts in an application have overlapping text segments. A prompt\ncache stores these overlapping segments for reuse, so you only need to\nprocess them once. A common overlapping text segment in different\nprompts is the system prompt. Without a prompt cache, your model needs\nto process the system prompt with every query. With a prompt cache, the\nsystem prompt needs to be processed just once for the first query.\nPrompt caching is useful for queries that involve long documents. "
+      },
+      {
+        "chunk_id": "76a41157-1999-48a3-b019-6b3695ea1d98:0835",
+        "score": 0.8251336216926575,
+        "text_preview": "Figure 9-17. With a prompt cache, overlapping segments in different prompts can be cached and\nreused.\nFor applications with long system prompts, prompt caching can\nsignificantly reduce both latency and cost. If your system prompt is 1,000\ntokens, and your application generates one million model API calls daily, a\nprompt cache will save you from processing approximately one billion\nrepetitive input tokens a day! However, this isn\u2019t entirely free. Like the KV\ncache, prompt cache size can be quite "
+      },
+      {
+        "chunk_id": "76a41157-1999-48a3-b019-6b3695ea1d98:0836",
+        "score": 0.8126023411750793,
+        "text_preview": "The impact of prompt caching on the cost and latency of different scenarios\nis shown in Table 9-3.\nTable 9-3. Cost and latency reduced by prompt caching. Information from Anthropic (2024).\nUse case\nLatency w/o\ncaching (time\nto first token)\nLatency with\ncaching (time\nto first token)\nCost\nreduction\nChat with a book\n(100,000-token\ncached prompt)\n11.5 s 2.4 s (\u201379%) \u201390%\nMany-shot\nprompting\n(10,000-token\nprompt)\n1.6 s 1.1 s (\u201331%) \u201386%\nMulti-turn\nconversation (10-\nturn convo with a\nlong system\npromp"
+      },
+      {
+        "chunk_id": "76a41157-1999-48a3-b019-6b3695ea1d98:0868",
+        "score": 0.8075838088989258,
+        "text_preview": "Step 4. Reduce Latency with Caches\nCaching has long been integral to software applications to reduce latency\nand cost. Many ideas from software caching can be used for AI\napplications. Inference caching techniques, including KV caching and\nprompt caching, are discussed in Chapter 9. This section focuses on system\ncaching. Because caching is an old technology with a large amount of\nexisting literature, this book will cover it only in broad strokes. In general,\nthere are two major system caching m"
+      },
+      {
+        "chunk_id": "76a41157-1999-48a3-b019-6b3695ea1d98:0607",
+        "score": 0.7967061698436737,
+        "text_preview": "One benefit of finetuning, before prompt caching was introduced, was that\nit can help optimize token usage. The more examples you add to a prompt,\nthe more input tokens the model will use, which increases both latency and\ncost. Instead of including your examples in each prompt, you can finetune a\nmodel on these examples. This allows you to use shorter prompts with the\nfinetuned model, as shown in Figure 7-2.\nWith prompt caching, where repetitive prompt segments can be cached for\nreuse, this is n"
+      },
+      {
+        "chunk_id": "76a41157-1999-48a3-b019-6b3695ea1d98:0421",
+        "score": 0.7862999737262726,
+        "text_preview": "length why and how in-context learning works (see \u201cHow Does In-context\nLearning Work?\u201d by the Stanford AI Lab). Fran\u00e7ois Chollet, the creator of\nthe ML framework Keras, compared a foundation model to a library of\nmany different programs. For example, it might contain one program that\ncan write haikus and another that can write limericks. Each program can be\nactivated by certain prompts. In this view, prompt engineering is about\nfinding the right prompt that can activate the program you want.\nSys"
+      },
+      {
+        "chunk_id": "76a41157-1999-48a3-b019-6b3695ea1d98:0972",
+        "score": 0.7852294147014618,
+        "text_preview": "prompt attacks, Defensive Prompt Engineering, Jailbreaking and Prompt\nInjection-Indirect prompt injection\nautomated attacks, Automated attacks\ndefense against, Defenses Against Prompt Attacks-System-level\ndefense\ndirect manual prompt hacking, Direct manual prompt hacking-Direct\nmanual prompt hacking\nindirect prompt injection, Indirect prompt injection-Indirect prompt\ninjection\nprompt caching, Prompt caching-Prompt caching\nprompt catalogs, Organize and Version Prompts\nprompt engineering, Prompt E"
+      }
+    ],
+    "recall_at_k": 1.0,
+    "mrr": 1.0,
+    "k": 7,
+    "timestamp": "2026-05-17T07:36:54.505623",
+    "pipeline_version": "phase1_semantic"
+  },
+  {
+    "query": "Why is batching useful?",
+    "relevant_chunks": [
+      "76a41157-1999-48a3-b019-6b3695ea1d98:0830",
+      "76a41157-1999-48a3-b019-6b3695ea1d98:0831",
+      "76a41157-1999-48a3-b019-6b3695ea1d98:0779"
+    ],
+    "retrieved_chunks_snapshot": [
+      {
+        "chunk_id": "76a41157-1999-48a3-b019-6b3695ea1d98:0830",
+        "score": 0.8109272718429565,
+        "text_preview": "people, but it can also make each person\u2019s journey longer. However, if you\ndo it intelligently, the impact on latency can be minimal.\nThe three main techniques for batching are: static batching, dynamic\nbatching, and continuous batching.\nThe simplest batching technique is static batching. The service groups a\nfixed number of inputs together in a batch. It\u2019s like a bus that waits until\nevery seat is filled before departing. The drawback of static batching is that\nall requests have to wait until t"
+      },
+      {
+        "chunk_id": "76a41157-1999-48a3-b019-6b3695ea1d98:0831",
+        "score": 0.7841320633888245,
+        "text_preview": "Figure 9-15. Dynamic batching keeps the latency manageable but might be less compute-efficient.\nIn naive batching implementations, all batch requests have to be completed\nbefore their responses are returned. For LLMs, some requests might take\nmuch longer than others. If one request in a batch generates only 10\nresponse tokens and another request generates 1,000 response tokens, the\nshort response has to wait until the long response is completed before being\nreturned to the user. This results in "
+      },
+      {
+        "chunk_id": "76a41157-1999-48a3-b019-6b3695ea1d98:0832",
+        "score": 0.7409124970436096,
+        "text_preview": "Figure 9-16. With continuous batching, completed responses can be returned immediately to users,\nand new requests can be processed in their place.\nDecoupling prefill and decode\nLLM inference consists of two steps: prefill and decode. Because prefill is\ncompute-bound and decode is memory bandwidth-bound, using the same\nmachine to perform both can cause them to inefficiently compete for\nresources and significantly slow down both TTFT and TPOT. Imagine a\nGPU that is already handling prefilling and "
+      },
+      {
+        "chunk_id": "76a41157-1999-48a3-b019-6b3695ea1d98:0779",
+        "score": 0.7338960468769073,
+        "text_preview": "Online and batch inference APIs\nMany providers offer two types of inference APIs, online and batch:\nOnline APIs optimize for latency. Requests are processed as soon as they\narrive.\nBatch APIs optimize for cost. If your application doesn\u2019t have strict\nlatency requirements, you can send them to batch APIs for more efficient\nprocessing. Higher latency allows a broader range of optimization\ntechniques, including batching requests together and using cheaper\nhardware. For example, as of this writing, "
+      },
+      {
+        "chunk_id": "76a41157-1999-48a3-b019-6b3695ea1d98:0753",
+        "score": 0.7273187935352325,
+        "text_preview": "TIP\nWith a large amount of data, each of these processing steps can take hours, if not days. Tips to help\noptimize efficiency during the process include:\nYou can do these data processing steps in whichever order saves time and compute. For example,\nif it takes more time to clean each example than to deduplicate data, you might want to remove\nthe duplicated examples first before cleaning them. But if deduplication takes more time than\nfiltering out low-quality data, filter out low-quality data fi"
+      },
+      {
+        "chunk_id": "76a41157-1999-48a3-b019-6b3695ea1d98:0935",
+        "score": 0.727200984954834,
+        "text_preview": "batch size, Batch size\nbatching\nbatch inference APIs, Online and batch inference APIs-Online and\nbatch inference APIs\nbatch size, Batch size\ncontinuous, Batching\ndynamic, Batching\nstatic, Batching\nbenchmarks\nfor comparative evaluation, The Future of Comparative Evaluation\ndata contamination detection, Perplexity Interpretation and Use Cases\ndomain distribution and, Domain-Specific Models\ndomain-specific, Domain-Specific Capability-Domain-Specific\nCapability\ninstruction-following criteria, Instru"
+      },
+      {
+        "chunk_id": "76a41157-1999-48a3-b019-6b3695ea1d98:0840",
+        "score": 0.7190777063369751,
+        "text_preview": "Figure 9-19. Pipeline parallelism enables model splits to be executed in parallel.\nFigure 9-19 shows a batch can be split into smaller micro-batches. After a\nmicro-batch is processed on one machine, its output is passed onto the next\npart of the model on the next machine.\nWhile pipeline parallelism enables serving large models on multiple\nmachines, it increases the total latency for each request due to extra\ncommunication between pipeline stages. Therefore, for applications with\nstrict latency r"
+      }
+    ],
+    "recall_at_k": 1.0,
+    "mrr": 1.0,
+    "k": 7,
+    "timestamp": "2026-05-17T07:40:20.694910",
+    "pipeline_version": "phase1_semantic"
+  },
+  {
+    "query": "what is TTFT?",
+    "relevant_chunks": [
+      "76a41157-1999-48a3-b019-6b3695ea1d98:0782",
+      "76a41157-1999-48a3-b019-6b3695ea1d98:0784",
+      "76a41157-1999-48a3-b019-6b3695ea1d98:0783",
+      "76a41157-1999-48a3-b019-6b3695ea1d98:0787"
+    ],
+    "retrieved_chunks_snapshot": [
+      {
+        "chunk_id": "76a41157-1999-48a3-b019-6b3695ea1d98:0782",
+        "score": 0.8057162165641785,
+        "text_preview": "TTFT measures how quickly the first token is generated after users\nsend a query. It corresponds to the duration of the prefill step and\ndepends on the input\u2019s length. Users might have different\nexpectations for TTFT for different applications. For example, for\nconversational chatbots, the TTFT should be instantaneous.\nHowever, users might be willing to wait longer to summarize long\ndocuments.\nTime per output token\nTPOT measures how quickly each output token is generated after the\nfirst token. If"
+      },
+      {
+        "chunk_id": "76a41157-1999-48a3-b019-6b3695ea1d98:0784",
+        "score": 0.7562901675701141,
+        "text_preview": "3. Based on these outputs, generate a final response to show the user.\nFrom the model\u2019s perspective, the first token is generated in step 1. This is\nwhen the model internally begins its token generation process. The user,\nhowever, only sees the first token of the final output generated in step 3.\nThus, from their perspective, TTFT is much longer.\nBecause latency is a distribution, the average can be misleading. Imagine\nyou have 10 requests whose TTFT values are 100 ms, 102 ms, 100 ms, 100\nms, 99"
+      },
+      {
+        "chunk_id": "76a41157-1999-48a3-b019-6b3695ea1d98:0783",
+        "score": 0.7417923808097839,
+        "text_preview": "The total latency will equal TTFT + TPOT \u00d7 (number of output\ntokens).\nTwo applications with the same total latency can offer different user\nexperiences with different TTFT and TPOT. Would your users prefer instant\nfirst tokens with a longer wait between tokens, or would they rather wait\nslightly longer for the first tokens but enjoy faster token generation\nafterward? User studies will be necessary to determine the optimal user\nexperience. Reducing TTFT at the cost of higher TPOT is possible by\ns"
+      },
+      {
+        "chunk_id": "76a41157-1999-48a3-b019-6b3695ea1d98:0787",
+        "score": 0.6997656226158142,
+        "text_preview": "throughput but reduce latency. According to the LinkedIn AI team in their\nreflection after a year of deploying generative AI products (LinkedIn,\n2024), it\u2019s not uncommon to double or triple the throughput if you\u2019re\nwilling to sacrifice TTFT and TPOT.\nDue to this trade-off, focusing on an inference service based solely on its\nthroughput and cost can lead to a bad user experience. Instead, some teams\nfocus on goodput, a metric adapted from networking for LLM applications.\nGoodput measures the numb"
+      },
+      {
+        "chunk_id": "76a41157-1999-48a3-b019-6b3695ea1d98:0983",
+        "score": 0.6966777443885803,
+        "text_preview": "time to first token (TTFT), Setting Expectations, Latency, TTFT, and\nTPOT-Latency, TTFT, and TPOT\ntokenization, Multilingual Models, Model Size, Bits-per-Character and\nBits-per-Byte, Term-based retrieval, Chunking strategy\ndefined, Language models\ntokenizer, Chunking strategy\ntokens, Language models, Model Size\ntool use, Tool selection\ntop-k, Top-k\ntop-p, Top-p\nTPOT (time per output token), Setting Expectations, Latency, TTFT, and\nTPOT-Latency, TTFT, and TPOT\ntraces, Logs and traces\ntrainable pa"
+      },
+      {
+        "chunk_id": "76a41157-1999-48a3-b019-6b3695ea1d98:0948",
+        "score": 0.6733501851558685,
+        "text_preview": "functional correctness, Functional Correctness-Functional Correctness\nsimilarity measurements against reference data, Similarity\nMeasurements Against Reference Data-Semantic similarity\nexact matches, Exact match\nexpectation setting, Setting Expectations\nexplicit feedback, Extracting Conversational Feedback-Dialogue\ndiversity\nF\nfactual consistency, Factual consistency-Factual consistency, Create\nscoring rubrics with examples\nfaithfulness, Generation Capability\nfeature-based transfers, Finetuning,"
+      },
+      {
+        "chunk_id": "76a41157-1999-48a3-b019-6b3695ea1d98:0501",
+        "score": 0.6724241077899933,
+        "text_preview": "more informative terms like vietnamese and recipes, not for and at. You\nneed a way to identify important terms.\nAn intuition is that the more documents contain a term, the less\ninformative this term is. \u201cFor\u201d and \u201cat\u201d are likely to appear in most\ndocuments, hence, they are less informative. So a term\u2019s importance is\ninversely proportional to the number of documents it appears in. This\nmetric is called inverse document frequency (IDF). To compute IDF for a\nterm, count all the documents that conta"
+      }
+    ],
+    "recall_at_k": 1.0,
+    "mrr": 1.0,
+    "k": 7,
+    "timestamp": "2026-05-17T07:47:58.521017",
+    "pipeline_version": "phase1_semantic"
+  }
+]
