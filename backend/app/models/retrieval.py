@@ -10,8 +10,12 @@ class Hit(BaseModel):
     chunk_index: int
     text: str                    # full chunk text
     source_page: int | None
-    score: float                 # cosine similarity in [0, 1]
-    source: Literal["semantic"]  # Phase 1: always "semantic"
+    score: float                 # cosine similarity [0,1] or RRF score
+    source: Literal["semantic", "bm25", "fused", "reranked"]
+    # Phase 2+ optional fields
+    rrf_score: float | None = None
+    bm25_rank: int | None = None      # 0-indexed rank in BM25 results
+    semantic_rank: int | None = None  # 0-indexed rank in semantic results
 
 
 class RewriteResult(BaseModel):
@@ -23,4 +27,8 @@ class RewriteResult(BaseModel):
 
 class RetrievalResult(BaseModel):
     semantic_hits: list[Hit]     # may be empty on semantic_fallback
-    flags: dict[str, bool]       # rewrite_fallback, semantic_fallback
+    flags: dict[str, bool]       # rewrite_fallback, semantic_fallback, bm25_fallback
+    # Phase 2+ fields
+    bm25_hits: list[Hit] = []
+    fused_hits: list[Hit] = []
+    rewritten_query: str = ""    # exposed so callers don't need to call rewrite() separately

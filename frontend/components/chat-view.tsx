@@ -35,6 +35,7 @@ export function ChatView() {
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
+  const [liveTrace, setLiveTrace] = useState<TracePartial>({});
   const bottomRef = useRef<HTMLDivElement>(null);
   const ctrlRef = useRef<AbortController | null>(null);
   const loadedChatRef = useRef<string | null>(null);
@@ -64,6 +65,7 @@ export function ChatView() {
     setInput("");
     setIsStreaming(true);
     setStreamingContent("");
+    setLiveTrace({});
 
     // Optimistic user message
     const tempUserId = `temp-user-${Date.now()}`;
@@ -87,7 +89,6 @@ export function ChatView() {
     });
 
     let accumulated = "";
-    let tracePartial: TracePartial = {};
     let finalMsgId = STREAMING_ID;
     let finalTraceId: string | null = null;
 
@@ -116,7 +117,7 @@ export function ChatView() {
           if (ev.event === "user_message_saved") {
             updateMessage(activeChatId, tempUserId, { id: data.message_id });
           } else if (ev.event === "trace_partial") {
-            tracePartial = { ...tracePartial, ...data };
+            setLiveTrace((prev) => ({ ...prev, ...data }));
           } else if (ev.event === "token") {
             accumulated += data.text;
             setStreamingContent(accumulated);
@@ -146,6 +147,7 @@ export function ChatView() {
     });
 
     setStreamingContent("");
+    setLiveTrace({});
     setIsStreaming(false);
   }, [input, activeChatId, isStreaming, addMessage, updateMessage]);
 
@@ -225,6 +227,7 @@ export function ChatView() {
                 created_at: new Date().toISOString(),
               }}
               streaming
+              liveTrace={liveTrace}
             />
           )}
 
@@ -281,13 +284,75 @@ export function ChatView() {
   );
 }
 
+function RetrievalSteps({ liveTrace }: { liveTrace: TracePartial }) {
+  const hasRewrite  = liveTrace.rewritten_query !== undefined;
+  const hasSearch   = liveTrace.bm25_hits !== undefined || liveTrace.semantic_hits !== undefined;
+  const hasFused    = liveTrace.fused_hits !== undefined;
+
+  const bm25Count      = liveTrace.bm25_hits?.length ?? 0;
+  const semanticCount  = liveTrace.semantic_hits?.length ?? 0;
+  const fusedCount     = liveTrace.fused_hits?.length ?? 0;
+
+  const steps = [
+    {
+      done: hasRewrite,
+      pending: "Rewriting query…",
+      done_label: "Query rewritten",
+    },
+    {
+      done: hasSearch,
+      pending: "Searching documents…",
+      done_label: `${bm25Count} BM25 · ${semanticCount} semantic`,
+    },
+    {
+      done: hasFused,
+      pending: "Fusing results…",
+      done_label: `${fusedCount} results fused`,
+    },
+  ];
+
+  // Which step is currently in-progress (first not-done step after the last done step)
+  const activeIdx = steps.findIndex((s) => !s.done);
+
+  return (
+    <div className="space-y-1.5 py-0.5">
+      {steps.map((step, i) => {
+        const isActive = i === activeIdx;
+        const isPast   = step.done;
+        return (
+          <div
+            key={i}
+            className={cn(
+              "flex items-center gap-2 text-xs",
+              isPast   ? "text-muted-foreground" : "",
+              isActive ? "text-foreground"        : "",
+              !isPast && !isActive ? "text-muted-foreground/40" : "",
+            )}
+          >
+            {isPast ? (
+              <span className="size-3.5 shrink-0 flex items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">✓</span>
+            ) : isActive ? (
+              <Loader2 className="size-3.5 shrink-0 animate-spin text-muted-foreground" />
+            ) : (
+              <span className="size-3.5 shrink-0 rounded-full border border-muted-foreground/20" />
+            )}
+            <span>{isPast ? step.done_label : step.pending}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function MessageItem({
   msg,
   streaming,
+  liveTrace,
   onViewTrace,
 }: {
   msg: Message;
   streaming?: boolean;
+  liveTrace?: TracePartial;
   onViewTrace?: () => void;
 }) {
   const isUser = msg.role === "user";
@@ -307,6 +372,8 @@ function MessageItem({
     );
   }
 
+  const showSteps = streaming && !msg.content;
+
   return (
     <div className="flex items-start gap-2">
       <div className="flex items-center justify-center size-7 rounded-full bg-primary shrink-0 mt-0.5">
@@ -316,16 +383,19 @@ function MessageItem({
         <div
           className={cn(
             "rounded-2xl rounded-tl-sm bg-muted/50 border px-4 py-3 text-sm",
-            "prose prose-sm max-w-none dark:prose-invert"
+            !showSteps && "prose prose-sm max-w-none dark:prose-invert"
           )}
         >
-          {msg.content || streaming ? (
+          {showSteps ? (
+            liveTrace && Object.keys(liveTrace).length > 0 ? (
+              <RetrievalSteps liveTrace={liveTrace} />
+            ) : (
+              <span className="inline-flex items-center gap-1 text-muted-foreground text-xs">
+                <Loader2 className="size-3 animate-spin" /> Thinking…
+              </span>
+            )
+          ) : (
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
-          ) : null}
-          {streaming && !msg.content && (
-            <span className="inline-flex items-center gap-1 text-muted-foreground text-xs">
-              <Loader2 className="size-3 animate-spin" /> Thinking…
-            </span>
           )}
         </div>
         {onViewTrace && (

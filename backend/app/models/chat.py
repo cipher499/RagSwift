@@ -41,6 +41,8 @@ class Trace(SQLModel, table=True):
     original_query: str
     rewritten_query: Optional[str] = None
     semantic_hits_json: str = "[]"
+    bm25_hits_json: str = "[]"     # Phase 2+
+    fused_hits_json: str = "[]"    # Phase 2+
     final_answer: str
     latency_ms: int
     langsmith_run_url: Optional[str] = None
