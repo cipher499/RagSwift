@@ -88,17 +88,47 @@ export function TracePanel({
                 </div>
               </section>
 
+              {/* Fused hits — final context sent to LLM */}
+              {trace.fused_hits?.length > 0 && (
+                <section className="space-y-2">
+                  <h3 className="text-xs font-medium uppercase text-muted-foreground tracking-wide">
+                    Final Context ({trace.fused_hits.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {trace.fused_hits.map((hit, i) => (
+                      <HitCard key={`fused-${hit.chunk_id}-${i}`} hit={hit} />
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* BM25 hits */}
+              <section className="space-y-2">
+                <h3 className="text-xs font-medium uppercase text-muted-foreground tracking-wide">
+                  BM25 ({trace.bm25_hits?.length ?? 0})
+                </h3>
+                {!trace.bm25_hits?.length ? (
+                  <p className="text-xs text-muted-foreground">No hits</p>
+                ) : (
+                  <div className="space-y-2">
+                    {trace.bm25_hits.map((hit) => (
+                      <HitCard key={`bm25-${hit.chunk_id}`} hit={hit} />
+                    ))}
+                  </div>
+                )}
+              </section>
+
               {/* Semantic hits */}
               <section className="space-y-2">
                 <h3 className="text-xs font-medium uppercase text-muted-foreground tracking-wide">
-                  Semantic Hits ({trace.semantic_hits.length})
+                  Semantic ({trace.semantic_hits.length})
                 </h3>
                 {trace.semantic_hits.length === 0 ? (
                   <p className="text-xs text-muted-foreground">No hits</p>
                 ) : (
                   <div className="space-y-2">
                     {trace.semantic_hits.map((hit) => (
-                      <HitCard key={hit.chunk_id} hit={hit} />
+                      <HitCard key={`sem-${hit.chunk_id}`} hit={hit} />
                     ))}
                   </div>
                 )}
@@ -147,28 +177,57 @@ export function TracePanel({
   );
 }
 
+const SOURCE_BADGE: Record<string, string> = {
+  semantic: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400",
+  bm25:     "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400",
+  fused:    "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400",
+  reranked: "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400",
+};
+
 function HitCard({ hit }: { hit: Hit }) {
+  // Semantic score is cosine similarity [0,1] — use colour coding.
+  // BM25 score is raw term frequency — no meaningful [0,1] range.
+  // Fused score is RRF [0.01–0.03] — not comparable to [0,1] thresholds.
+  const scoreColour =
+    hit.source === "semantic"
+      ? hit.score >= 0.8
+        ? "text-green-600 dark:text-green-400"
+        : hit.score >= 0.5
+        ? "text-amber-600 dark:text-amber-400"
+        : "text-muted-foreground"
+      : "text-muted-foreground";
+
+  const rankTags: string[] = [];
+  if (hit.bm25_rank != null)     rankTags.push(`BM25 #${hit.bm25_rank + 1}`);
+  if (hit.semantic_rank != null) rankTags.push(`sem #${hit.semantic_rank + 1}`);
+
   return (
     <div className="rounded-md border bg-card p-3 text-xs space-y-1.5">
       <div className="flex items-center justify-between gap-2">
-        <span className="font-medium truncate" title={hit.filename}>
-          {hit.filename}
-          {hit.source_page != null && (
-            <span className="text-muted-foreground ml-1">p.{hit.source_page}</span>
-          )}
-        </span>
-        <span
-          className={cn(
-            "shrink-0 tabular-nums font-mono",
-            hit.score >= 0.8
-              ? "text-green-600 dark:text-green-400"
-              : hit.score >= 0.5
-              ? "text-amber-600 dark:text-amber-400"
-              : "text-muted-foreground"
-          )}
-        >
-          {hit.score.toFixed(3)}
-        </span>
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span
+            className={cn(
+              "shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium",
+              SOURCE_BADGE[hit.source] ?? "bg-muted text-muted-foreground"
+            )}
+          >
+            {hit.source}
+          </span>
+          <span className="font-medium truncate" title={hit.filename}>
+            {hit.filename}
+            {hit.source_page != null && (
+              <span className="text-muted-foreground ml-1">p.{hit.source_page}</span>
+            )}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {rankTags.map((t) => (
+            <span key={t} className="text-muted-foreground/70">{t}</span>
+          ))}
+          <span className={cn("tabular-nums font-mono", scoreColour)}>
+            {hit.source === "fused" ? hit.score.toFixed(4) : hit.score.toFixed(3)}
+          </span>
+        </div>
       </div>
       <p className="text-muted-foreground line-clamp-3 leading-relaxed">{hit.text}</p>
     </div>

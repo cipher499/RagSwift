@@ -49,7 +49,11 @@ export interface Hit {
   text: string;
   source_page: number | null;
   score: number;
-  source: "semantic";
+  source: "semantic" | "bm25" | "fused" | "reranked";
+  // Phase 2+ optional fields
+  rrf_score?: number | null;
+  bm25_rank?: number | null;
+  semantic_rank?: number | null;
 }
 
 export interface Trace {
@@ -58,6 +62,8 @@ export interface Trace {
   original_query: string;
   rewritten_query: string | null;
   semantic_hits: Hit[];
+  bm25_hits: Hit[];
+  fused_hits: Hit[];
   final_answer: string;
   latency_ms: number;
   langsmith_run_url: string | null;
@@ -88,5 +94,7 @@ export interface IngestionErrorEvent {
 
 export interface TracePartial {
   rewritten_query?: string;
+  bm25_hits?: Hit[];
   semantic_hits?: Hit[];
+  fused_hits?: Hit[];
 }
