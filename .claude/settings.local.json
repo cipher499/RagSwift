@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m pytest tests/test_fusion.py -v)",
+      "Bash(uv run:*)",
+      "Bash(uv add:*)"
+    ]
+  }
+}
